@@ -341,8 +341,9 @@ void EngineSync::startSlaveProcess(int no)
 #elif __APPLE__
 	env.insert("R_HOME", programDir.absoluteFilePath("../Frameworks/R.framework/Versions/3.1/Resources"));
 #else
-    env.insert("LD_LIBRARY_PATH", programDir.absoluteFilePath("R/lib") + ";" + programDir.absoluteFilePath("R/library/RInside/lib") + ";" + programDir.absoluteFilePath("R/library/Rcpp/lib"));
-	env.insert("R_HOME", programDir.absoluteFilePath("R"));
+	env.insert("LD_LIBRARY_PATH", "/usr/lib/R/lib;/usr/lib/R/site-library/RInside/lib;/usr/lib/R/site-library/Rcpp/lib");
+	//env.insert("LD_LIBRARY_PATH", programDir.absoluteFilePath("R/lib") + ";" + programDir.absoluteFilePath("R/library/RInside/lib") + ";" + programDir.absoluteFilePath("R/library/Rcpp/lib"));
+	//env.insert("R_HOME", programDir.absoluteFilePath("R"));
 #endif
 
 

@@ -431,7 +431,10 @@ win32 {
 		RESOURCES_PATH_DEST ~= s,/,\\,g
 
         copydocs.commands += $$quote(cmd /c xcopy /S /I /Y $${HELP_PATH} $${HELP_PATH_DEST})
-		copylibrary.commands += $$quote(cmd /c xcopy /S /I /Y $${RESOURCES_PATH} $${RESOURCES_PATH_DEST})
+	copylibrary.commands += $$quote(cmd /c xcopy /S /I /Y $${RESOURCES_PATH} $${RESOURCES_PATH_DEST})
+
+	QMAKE_EXTRA_TARGETS += copydocs copylibrary
+	POST_TARGETDEPS += copydocs copylibrary
 }
 
 macx {
@@ -444,19 +447,9 @@ macx {
 
 		copylibrary.commands += $(MKDIR) $$RESOURCES_PATH_DEST ;
 		copylibrary.commands += cp -R $$RESOURCES_PATH/* $$RESOURCES_PATH_DEST ;
+
+	QMAKE_EXTRA_TARGETS += copydocs copylibrary
+	POST_TARGETDEPS += copydocs copylibrary
 }
 
-linux {
 
-        HELP_PATH_DEST = $${OUT_PWD}/../Help/
-		RESOURCES_PATH_DEST = $${OUT_PWD}/../Resources/
-
-        copydocs.commands += $(MKDIR) $$HELP_PATH_DEST ;
-        copydocs.commands += cp -R $$HELP_PATH/* $$HELP_PATH_DEST ;
-
-		copylibrary.commands += $(MKDIR) $$RESOURCES_PATH_DEST ;
-		copylibrary.commands += cp -R $$RESOURCES_PATH/* $$RESOURCES_PATH_DEST ;
-}
-
-QMAKE_EXTRA_TARGETS += copydocs copylibrary
-POST_TARGETDEPS += copydocs copylibrary
