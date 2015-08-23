@@ -30,10 +30,9 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 	
 	meta[[1]] <- list(name="title", type="title")
 	meta[[2]] <- list(name="stats", type="table")
-	meta[[3]] <- list(name="frequenciesHeading", type="h1")
-	meta[[4]] <- list(name="tables", type="tables")
-	meta[[5]] <- list(name="plots", type="images")
-	meta[[6]] <- list(name="matrixPlot", type="image")
+	meta[[3]] <- list(name="tables", type="tables")
+	meta[[4]] <- list(name="plots", type="images")
+	meta[[5]] <- list(name="matrixPlot", type="image")
 	
 	results[[".meta"]] <- meta
 	results[["title"]] <- "Descriptives"
@@ -53,16 +52,8 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 	last.frequency.tables <- NULL
 	if (is.list(state))
 		last.frequency.tables <- state[["results"]][["tables"]]
-
-	if (options$frequencyTables) {
 	
-		frequency.tables <- .descriptivesFrequencyTables(dataset.factors, options, run, last.frequency.tables)
-		
-		if (length(frequency.tables) > 0)
-			results[["frequenciesHeading"]] <- "Frequencies"
-		
-		results[["tables"]] <- frequency.tables
-	}
+	results[["tables"]] <- .descriptivesFrequencyTables(dataset.factors, options, run, last.frequency.tables)
 	
 
     ####  FREQUENCY PLOTS
@@ -75,7 +66,7 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 		
 	keep <- NULL
 
-	for (plot in results$plots)
+	for (plot in results$plots$items)
 		keep <- c(keep, plot$data)
 	
 	
@@ -543,7 +534,15 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 	stats.results
 }
 
-.descriptivesFrequencyTables <- function(dataset, options, run, last.tables) {
+.descriptivesFrequencyTables <- function(dataset, options, run, last.result) {
+
+	if (options$frequencyTables == FALSE)
+		return(NULL)
+
+	if (is.null(last.result))
+		last.tables <- NULL
+	else
+		last.tables <- last.result$tables
 
 	frequency.tables <- list()
 		
@@ -639,10 +638,17 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 		frequency.tables[[length(frequency.tables)+1]] <- frequency.table
 	}
 	
-	frequency.tables
+	list(title="Frequencies", items=frequency.tables)
 }
 
-.descriptivesFrequencyPlots <- function(dataset, options, run, last.plots) {
+.descriptivesFrequencyPlots <- function(dataset, options, run, last.results) {
+
+	if (options$plotVariables == FALSE)
+		return (NULL)
+
+	last.plots <- NULL
+	if (is.null(last.results) == FALSE)
+		last.plots <- last.results$items
 
 	frequency.plots <- NULL
 
@@ -738,7 +744,7 @@ Descriptives <- function(dataset=NULL, options, perform="run", callback=function
 		}
 	}
 	
-	frequency.plots
+	list(title="Plots", items=frequency.plots)
 }
 
 .descriptivesMatrixPlot <- function(dataset, options, run) {

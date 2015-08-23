@@ -141,8 +141,16 @@ checkPackages <- function() {
 				
 			} else if (m$type == "tables") {
 
-				for (i in .indices(res[[item.name]]))
-					res[[item.name]][[i]] <- .addCitationToTable(res[[item.name]][[i]])
+				if ("items" %in% names(res[[item.name]])) {
+				
+					for (i in .indices(res[[item.name]][["items"]]))
+						res[[item.name]][["items"]][[i]] <- .addCitationToTable(res[[item.name]][["items"]][[i]])
+
+				} else {
+
+					for (i in .indices(res[[item.name]]))
+						res[[item.name]][[i]] <- .addCitationToTable(res[[item.name]][[i]])
+				}
 			}
 		}
 	}
