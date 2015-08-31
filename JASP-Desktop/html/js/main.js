@@ -14,8 +14,6 @@ $(document).ready(function () {
 	if (ua.indexOf("windows") !== -1)
 		$("body").addClass("windows")
 
-	var analysesViews = []
-	//var menuObject = null;
 	var selectedAnalysisId = -1;
 	var selectedAnalysis = null
 
@@ -27,6 +25,8 @@ $(document).ready(function () {
 	var $instructions = $("#instructions")
 	var showInstructions = false;
 
+	var analyses = new JASPWidgets.Analyses({ className: "jasp-report" });
+
 	window.select = function (id) {
 
 		if (selectedAnalysis != null)
@@ -34,7 +34,7 @@ $(document).ready(function () {
 
 		selectedAnalysisId = id;
 
-		var jaspWidget = _.find(analysesViews, function (cv) { return cv.model.get("id") === id; });
+		var jaspWidget = analyses.getAnalysis(id);
 		if (jaspWidget !== undefined) {
 			selectedAnalysis = jaspWidget;
 			selectedAnalysis.select();
@@ -67,6 +67,13 @@ $(document).ready(function () {
 		window.menuObject = null;
 	}
 
+	window.editTitleMenuClicked = function () {
+		if (window.menuObject.editTitleClicked)
+			window.menuObject.editTitleClicked()
+
+		window.menuObject = null;
+	}
+
 	window.citeMenuClicked = function () {
 		if (window.menuObject.citeMenuClicked | window.menuObject.citeMenuClicked())
 			window.menuObject.toolbar.displayMessage("Citations copied to clipboard");
@@ -74,8 +81,8 @@ $(document).ready(function () {
 		window.menuObject = null;
 	}
 
-	window.commentaryMenuClicked = function (commentaryType) {
-		if (window.menuObject.commentaryMenuClicked | window.menuObject.commentaryMenuClicked(commentaryType))
+	window.notesMenuClicked = function (noteType, visibility) {
+		if (window.menuObject.notesMenuClicked | window.menuObject.notesMenuClicked(noteType, visibility))
 			window.menuObject.toolbar.displayMessage();
 
 		window.menuObject = null;
@@ -95,34 +102,45 @@ $(document).ready(function () {
 	}
 
 	window.exportHTML = function (filename) {
-		var exportObject = {
-			views: analysesViews,
-			exportComplete: function (exportParams, exportContent) {
-				if (exportParams.error) {
-
-				}
-
-				if (exportParams.process === JASPWidgets.ExportProperties.process.save)
-					jasp.saveTextToFile(filename, wrapHTML(exportContent.html, exportParams));
-			},
-			getStyleAttr: function () {
-				return "style='display: block;'";
-			}
-		};
 
 		var exportParams = new JASPWidgets.Exporter.params();
 		exportParams.format = JASPWidgets.ExportProperties.format.formattedHTML;
 		exportParams.process = JASPWidgets.ExportProperties.process.save;
 		exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.embedded;
+		exportParams.includeNotes = true;
 
 		if (filename === "%PREVIEW%") {
 			exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.resource;
 		}
 
-		JASPWidgets.Exporter.begin(exportObject, exportParams, true, "margin: .7em; padding: 1em;")
+		analyses.exportBegin(exportParams, function (exportParams, exportContent) {
+			if (exportParams.error) {
+
+			}
+
+			if (exportParams.process === JASPWidgets.ExportProperties.process.save)
+				jasp.saveTextToFile(filename, wrapHTML(exportContent.html, exportParams));
+		})
 	}
 
-	window.scrollIntoView = function (item) {
+	window.getAnalysesNotes = function () {
+		var notes = analyses.getAnalysesNotes();
+		return JSON.stringify(notes)
+	}
+
+	window.getResultsMeta = function () {
+
+		var meta = analyses.getResultsMeta();
+
+		return JSON.stringify(meta)
+	}
+
+	window.setResultsMeta = function (resultsMeta) {
+
+		analyses.setResultsMeta(resultsMeta);
+	}
+
+	window.scrollIntoView = function (item, complete) {
 
 		var itemTop = item.offset().top
 		var itemBottom = itemTop + item.height() + parseInt(item.css('marginBottom')) + parseInt(item.css('marginTop'))
@@ -132,22 +150,26 @@ $(document).ready(function () {
 		if (item.height() < window.innerHeight) {
 
 			if (itemTop < windowTop)
-				$("html, body").animate({ scrollTop: item.offset().top }, { duration: 'slow', easing: 'swing' });
+				$("html, body").animate({ scrollTop: item.offset().top }, { duration: 'slow', easing: 'swing', complete: complete });
 			else if (itemBottom > windowBottom)
-				$("html, body").animate({ scrollTop: itemBottom - window.innerHeight + 10 }, { duration: 'slow', easing: 'swing' });
+				$("html, body").animate({ scrollTop: itemBottom - window.innerHeight + 10 }, { duration: 'slow', easing: 'swing', complete: complete });
+			else if (complete !== undefined)
+				complete.call(item);
 		}
 		else {
 			if (itemTop > windowTop)
-				$("html, body").animate({ scrollTop: item.offset().top }, { duration: 'slow', easing: 'swing' });
+				$("html, body").animate({ scrollTop: item.offset().top }, { duration: 'slow', easing: 'swing', complete: complete });
 			else if (itemBottom < windowBottom)
-				$("html, body").animate({ scrollTop: itemBottom - window.innerHeight + 10 }, { duration: 'slow', easing: 'swing' });
+				$("html, body").animate({ scrollTop: itemBottom - window.innerHeight + 10 }, { duration: 'slow', easing: 'swing', complete: complete });
+			else if (complete !== undefined)
+				complete.call(item);
 		}
 
 	}
 
 	window.unselect = function () {
 
-		_.invoke(analysesViews, "unselect");
+		analyses.unselectAllAnalyses();
 
 		$("body").removeClass("selected")
 
@@ -162,21 +184,7 @@ $(document).ready(function () {
 
 		window.unselect()
 
-		var analysis = $('#id-' + id)
-
-		analysis.animate({ opacity: 0 }, 400, "easeOutCubic", function () {
-
-			analysis.slideUp(400, function () {
-				var jaspWidget = _.find(analysesViews, function (cv) { return cv.model.get("id") === id; });
-				if (jaspWidget !== undefined) {
-					jaspWidget.close();
-					analysesViews = _.without(analysesViews, jaspWidget);
-				}
-			});
-
-
-		})
-
+		analyses.removeAnalysisId(id);
 
 		if (showInstructions)
 			hideInstructions()
@@ -185,7 +193,8 @@ $(document).ready(function () {
 	window.unselectByClickingBody = function (event) {
 
 		var target = event.target || event.srcElement;
-		if (selectedAnalysisId !== -1 && $(target).is(".jasp-analysis *") == false) {
+
+		if (selectedAnalysisId !== -1 && $(target).is(".jasp-analysis *, .etch-editor-panel, .etch-editor-panel *") == false) {
 
 			window.unselect()
 			jasp.analysisUnselected()
@@ -198,7 +207,7 @@ $(document).ready(function () {
 	var selectedHandler = function (event) {
 
 		var target = event.target || event.srcElement;
-		if ($(target).is(".jasp-resize, .toolbar-clickable, .toolbar-clickable *"))
+		if ($(target).is(".jasp-resize, .jasp-notes, .jasp-notes *, .toolbar-clickable, .toolbar-clickable *"))
 			return
 
 		var id = $(event.currentTarget).attr("id")
@@ -253,7 +262,30 @@ $(document).ready(function () {
 
 		var id = "id-" + analysis.id
 
-		var jaspWidget = _.find(analysesViews, function (cv) { return cv.model.get("id") === analysis.id; });
+		var spacer = $("#spacer")
+
+		if (analyses.initialised === undefined) {
+
+			analyses.initialised = true;
+
+			analyses.on("toolbar:showMenu", function (obj, options) {
+
+				jasp.showAnalysesMenu(JSON.stringify(options));
+				window.menuObject = obj;
+			});
+
+			analyses.on("meta:noteChanged", function (key) {
+				jasp.updateNote(-1, key);
+			});
+
+			analyses.render();
+
+			analyses.$el.css("opacity", 0)
+			spacer.before(analyses.$el);
+			analyses.$el.animate({ "opacity": 1 }, 400, "easeOutCubic")
+		}
+
+		var jaspWidget = analyses.getAnalysis(analysis.id);
 		if (jaspWidget == undefined) {
 			jaspWidget = new JASPWidgets.AnalysisView({ id: id, className: "jasp-analysis", model: new JASPWidgets.Analysis(analysis) });
 
@@ -271,12 +303,7 @@ $(document).ready(function () {
 				jaspWidget.select();
 			}
 
-			analysesViews.push(jaspWidget)
-
-			var spacer = $("#spacer")
-			newItem.css("opacity", 0)
-			spacer.before(newItem)
-			newItem.animate({ "opacity": 1 }, 400, "easeOutCubic")
+			analyses.addAnalysis(jaspWidget);
 
 			jaspWidget.on("optionschanged", function (id, options) {
 
@@ -292,6 +319,10 @@ $(document).ready(function () {
 
 			jaspWidget.on("analysis:remove", function (id) {
 				jasp.removeAnalysisRequest(id);
+			});
+
+			jaspWidget.on("analysis:noteChanged", function (id, key) {
+				jasp.updateNote(id, key);
 			});
 		}
 		else
@@ -344,6 +375,10 @@ var pushImageToClipboard = function (exportContent, exportParams) {
 	jasp.pushImageToClipboard(exportContent.raw, wrapHTML(exportContent.html, exportParams))
 }
 
+var simulateClick = function (x, y, count) {
+
+	jasp.simulatedMouseClick(x, y, count);
+}
 
 var savingId = 0;
 var savingImages = {};

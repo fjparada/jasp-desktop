@@ -26,6 +26,30 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 		};
 	},
 
+	setNoteBox: function (key, noteBox) {
+		this.noteBox = noteBox;
+		this.noteBoxKey = key;
+	},
+
+	hasNotes: function () {
+		return true;
+	},
+
+	notesMenuClicked: function (noteType, visibility) {
+
+		this.noteBox.setVisibilityAnimate(visibility);
+
+		return true;
+	},
+
+	noteOptions: function () {
+		var options = { key: this.noteBoxKey, menuText: 'Add Note', visible: this.noteBox.visible };
+		if (this.noteBox.visible)
+			options.menuText = 'Remove Note';
+
+		return [options];
+	},
+
 	_fsd: function (value) { // first significant digit position
 
 		if (value > 0)
@@ -781,11 +805,11 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 
 		if (optError) {
 
-			chunks.push('<table class="error-state">')
+			chunks.push('<table class="error-state jasp-no-select">')
 		}
 		else {
 
-			chunks.push('<table>')
+			chunks.push('<table class="jasp-no-select">')
 		}
 
 
@@ -997,6 +1021,12 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 
 		this.$el.append(html);
 
+		if (this.noteBox !== undefined) {
+			this.noteBox.render();
+			this.noteBox.$el.addClass('do-not-copy')
+			this.$el.append(this.noteBox.$el);
+		}
+
 		
 		this.toolbar.render();
 		this.toolbar.$el.append('<div class="status"></div>');
@@ -1109,14 +1139,31 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 		return text;
 	},
 
-	exportBegin: function (exportParams) {
+	exportBegin: function (exportParams, completedCallback) {
 
 		if (exportParams == undefined)
 			exportParams = new JASPWidgets.Exporter.params();
 		else if (exportParams.error)
 			return false;
 
-		this.exportComplete(exportParams, new JASPWidgets.Exporter.data(null, this.exportHTML(exportParams)));
+		var callback = this.exportComplete;
+		if (completedCallback !== undefined)
+			callback = completedCallback;
+
+		if (exportParams.includeNotes && this.noteBox !== undefined) {
+			var exportObject = {
+				views: [this, this.noteBox],
+				getStyleAttr: function () {
+					return "style='display: block;'";
+				}
+			};
+			var newParams = exportParams.clone();
+			newParams.includeNotes = false;
+
+			JASPWidgets.Exporter.begin(exportObject, newParams, callback, true);
+		}
+		else
+			callback.call(this, exportParams, new JASPWidgets.Exporter.data(null, this.exportHTML(exportParams)));
 
 		return true;
 	},
@@ -1131,6 +1178,7 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 		exportParams.format = JASPWidgets.ExportProperties.format.html;
 		exportParams.process = JASPWidgets.ExportProperties.process.copy;
 		exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.temporary;
+		exportParams.includeNotes = false;
 
 		this.exportBegin(exportParams);
 
@@ -1147,6 +1195,7 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 		exportParams.format = JASPWidgets.ExportProperties.format.html;
 		exportParams.process = JASPWidgets.ExportProperties.process.copy;
 		exportParams.htmlImageFormat = JASPWidgets.ExportProperties.htmlImageFormat.temporary;
+		exportParams.includeNotes = false;
 
 		var optCitation = this.model.get("citation");
 
@@ -1175,5 +1224,7 @@ JASPWidgets.tableView = JASPWidgets.View.extend({
 
 	onClose: function () {
 		this.toolbar.close();
+		if (this.noteBox !== undefined)
+			this.noteBox.detach();
 	}
 });
