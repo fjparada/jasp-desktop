@@ -20,6 +20,9 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QWidget" name="topWidget" native="true">
      <property name="sizePolicy">
@@ -39,7 +42,7 @@
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>13</number>
       </property>
       <property name="verticalSpacing">
        <number>3</number>
@@ -355,10 +358,7 @@
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <property name="verticalSpacing">
-       <number>0</number>
+       <number>3</number>
       </property>
       <item row="1" column="0" colspan="3">
        <widget class="ExpanderButton" name="pushButton">
@@ -374,6 +374,9 @@
           <number>0</number>
          </property>
          <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
           <number>0</number>
          </property>
          <property name="bottomMargin">
@@ -547,28 +550,12 @@
            </layout>
           </widget>
          </item>
-         <item row="2" column="2">
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item row="3" column="0">
           <widget class="GroupBox" name="groupNominalByInterval">
            <property name="title">
             <string>Nominal by Interval</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_13">
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
             <item row="0" column="0">
              <widget class="BoundCheckBox" name="byIntervalEta">
               <property name="text">
@@ -641,13 +628,13 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>2</number>
+       <number>3</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>3</number>
       </property>
       <item row="0" column="0" colspan="3">
        <widget class="ExpanderButton" name="pushButton_2">
@@ -879,13 +866,13 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>2</number>
+       <number>3</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>3</number>
       </property>
       <item row="1" column="0" colspan="2">
        <widget class="QWidget" name="panelOptions" native="true">
